@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGS Medicals & General Stores</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f2f2f2;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "AGS";
+      font-size: 20vw;
+      font-weight: 900;
+      color: rgba(0, 0, 0, 0.06);
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      z-index: 0;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      margin-top: 50px;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #00704a;
+      margin-bottom: 20px;
+    }
+
+    button, input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #00704a;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #005f3b;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .item-entry {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .item-entry input {
+      flex: 1;
+      min-width: 45%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    @media screen and (max-width: 600px) {
+      body::before {
+        font-size: 30vw;
+      }
+
+      .container {
+        padding: 15px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card" id="mainMenu">
+      <h1>Welcome to AGS</h1>
+      <button onclick="showUserLogin()">User Login</button>
+      <button onclick="showOwnerLogin()">Owner Login</button>
+    </div>
+
+    <div class="card hidden" id="userLogin">
+      <h2>User Login</h2>
+      <input type="text" id="userName" placeholder="Enter your name" required>
+      <button onclick="loginUser()">Continue</button>
+    </div>
+
+    <div class="card hidden" id="orderForm">
+      <h2>Place Your Order</h2>
+      <input type="tel" id="userPhone" placeholder="Phone Number" required>
+      <textarea id="userAddress" placeholder="Delivery Address" rows="3" required></textarea>
+      <div id="itemsContainer"></div>
+      <button onclick="submitOrder()">Submit Order</button>
+      <button onclick="logoutToMenu()">Logout</button>
+    </div>
+
+    <div class="card hidden" id="ownerLogin">
+      <h2>Owner Login</h2>
+      <input type="text" id="ownerUsername" placeholder="Username">
+      <input type="password" id="ownerPassword" placeholder="Password">
+      <button onclick="loginOwner()">Login</button>
+      <button onclick="logoutToMenu()">Back</button>
+    </div>
+
+    <div class="card hidden" id="adminPanel">
+      <h2>Admin Dashboard</h2>
+      <div id="orders"></div>
+      <button onclick="logoutToMenu()">Logout</button>
+    </div>
+  </div>
+
+  <script>
+    let orderList = [];
+
+    const mainMenu = document.getElementById('mainMenu');
+    const userLogin = document.getElementById('userLogin');
+    const orderForm = document.getElementById('orderForm');
+    const ownerLogin = document.getElementById('ownerLogin');
+    const adminPanel = document.getElementById('adminPanel');
+    const itemsContainer = document.getElementById('itemsContainer');
+
+    function showUserLogin() {
+      mainMenu.classList.add('hidden');
+      userLogin.classList.remove('hidden');
+    }
+
+    function showOwnerLogin() {
+      mainMenu.classList.add('hidden');
+      ownerLogin.classList.remove('hidden');
+    }
+
+    function logoutToMenu() {
+      document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
+      mainMenu.classList.remove('hidden');
+    }
+
+    function loginUser() {
+      const name = document.getElementById('userName').value.trim();
+      if (!name) return alert('Please enter your name.');
+      userLogin.classList.add('hidden');
+      orderForm.classList.remove('hidden');
+      itemsContainer.innerHTML = '';
+      createItemRow();
+    }
+
+    function loginOwner() {
+      const username = document.getElementById('ownerUsername').value;
+      const password = document.getElementById('ownerPassword').value;
+      if (username === 'saravanan' && password === 'ags@1975') {
+        ownerLogin.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loadOrders();
+      } else {
+        alert('Incorrect username or password');
+      }
+    }
+
+    function createItemRow() {
+      const div = document.createElement('div');
+      div.className = 'item-entry';
+      const itemInput = document.createElement('input');
+      itemInput.placeholder = 'Item Name';
+      const qtyInput = document.createElement('input');
+      qtyInput.type = 'number';
+      qtyInput.placeholder = 'Qty';
+
+      itemInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          qtyInput.focus();
+        }
+      });
+      qtyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          createItemRow();
+        }
+      });
+
+      div.appendChild(itemInput);
+      div.appendChild(qtyInput);
+      itemsContainer.appendChild(div);
+      itemInput.focus();
+    }
+
+    function submitOrder() {
+      const name = document.getElementById('userName').value;
+      const phone = document.getElementById('userPhone').value;
+      const address = document.getElementById('userAddress').value;
+      const itemEntries = document.querySelectorAll('.item-entry');
+
+      const items = Array.from(itemEntries).map(entry => {
+        const inputs = entry.querySelectorAll('input');
+        return {
+          name: inputs[0].value,
+          qty: inputs[1].value
+        };
+      }).filter(i => i.name && i.qty);
+
+      if (!name || !phone || !address || items.length === 0) {
+        alert('Please fill all details.');
+        return;
+      }
+
+      orderList.push({ name, phone, address, items });
+      alert('Order placed!');
+      logoutToMenu();
+    }
+
+    function loadOrders() {
+      if (orderList.length === 0) {
+        document.getElementById('orders').innerHTML = '<p>No orders yet.</p>';
+        return;
+      }
+      let html = '<table><tr><th>Name</th><th>Phone</th><th>Address</th><th>Items</th></tr>';
+      orderList.forEach(order => {
+        const items = order.items.map(i => `${i.name} (${i.qty})`).join('<br>');
+        html += `<tr><td>${order.name}</td><td>${order.phone}</td><td>${order.address}</td><td>${items}</td></tr>`;
+      });
+      html += '</table>';
+      document.getElementById('orders').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
